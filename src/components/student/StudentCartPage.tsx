@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useCartStore } from '../../../store/cartStore';
-import { useAuthStore } from '../../../store/authStore';
-import { useDataStore } from '../../../store/dataStore';
-import { Button } from '../../ui/button';
-import { Badge } from '../../ui/badge';
+import { useCartStore } from '../../store/cartStore';
+import { useAuthStore } from '../../store/authStore';
+import { useDataStore } from '../../store/dataStore';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { Trash2, ShoppingBag, CreditCard, ChevronLeft, ShoppingCart, ShieldCheck, MapPin, Phone, Building2, Map as MapIcon, CheckCircle2, Navigation, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,7 +46,6 @@ export const StudentCartPage: React.FC = () => {
     setError(null);
 
     const newOrder: any = {
-      id: `ORD-${Math.floor(Math.random() * 10000)}`,
       userId: user.id,
       userName: user.fullName,
       userDepartment: user.department || 'General',
@@ -299,7 +298,7 @@ export const StudentCartPage: React.FC = () => {
                           value={transactionId}
                           onChange={(e) => setTransactionId(e.target.value)}
                           className="w-full h-12 bg-white border border-blue-200 rounded-xl px-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                          placeholder="Enter Transaction ID (Mock)"
+                          placeholder="Enter Transaction ID"
                         />
                      </div>
                    </motion.div>

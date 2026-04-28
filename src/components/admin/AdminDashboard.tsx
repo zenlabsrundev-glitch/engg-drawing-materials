@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useDataStore } from '../../../store/dataStore';
-import { useAuthStore } from '../../../store/authStore';
+import { useDataStore } from '../../store/dataStore';
+import { useAuthStore } from '../../store/authStore';
 import {
   Users,
   Package,
@@ -10,15 +10,22 @@ import {
   AlertCircle,
   TrendingUp,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Truck
 } from 'lucide-react';
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 export const AdminDashboard: React.FC = () => {
-  const { users, orders, kits } = useDataStore();
-  const { user } = useAuthStore();
+  const { users, orders, kits, initData } = useDataStore();
+  const { user, role } = useAuthStore();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (role && user) {
+      initData(role, user);
+    }
+  }, [initData, role, user]);
 
   const students = users.filter(u => u.role === 'student');
   const pendingOrders = orders.filter(o => o.status === 'Pending');
@@ -63,10 +70,10 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Dashboard Overview</h1>
-        <p className="text-slate-500 font-medium">Welcome back, {user?.fullName || 'Admin'}. Here's what's happening.</p>
+    <div className="space-y-8 md:space-y-10">
+      <div className="flex flex-col gap-1 px-1">
+        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Dashboard Overview</h1>
+        <p className="text-sm font-medium text-slate-500">Welcome back, <span className="font-bold">{user?.fullName || 'Admin'}</span>. Here's what's happening.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -136,16 +143,19 @@ export const AdminDashboard: React.FC = () => {
             {orders.slice(0, 5).map((order) => {
               const isPending = order.status === 'Pending';
               const isPacked = order.status === 'Packed';
+              const isOutForDelivery = order.status === 'Out for Delivery';
               
               const statusGradient = isPending 
                 ? 'from-amber-400 to-orange-500' 
                 : isPacked 
-                  ? 'from-indigo-500 to-blue-600' 
-                  : 'from-emerald-500 to-teal-600';
+                  ? 'from-indigo-500 to-blue-600'
+                  : isOutForDelivery
+                    ? 'from-orange-400 to-amber-500'
+                    : 'from-emerald-500 to-teal-600';
 
-              const iconBg = isPending ? 'bg-amber-50' : isPacked ? 'bg-indigo-50' : 'bg-emerald-50';
-              const iconColor = isPending ? 'text-amber-500' : isPacked ? 'text-indigo-500' : 'text-emerald-500';
-              const badgeClasses = isPending ? 'bg-amber-100 text-amber-700' : isPacked ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700';
+              const iconBg = isPending ? 'bg-amber-50' : isPacked ? 'bg-indigo-50' : isOutForDelivery ? 'bg-orange-50' : 'bg-emerald-50';
+              const iconColor = isPending ? 'text-amber-500' : isPacked ? 'text-indigo-500' : isOutForDelivery ? 'text-orange-500' : 'text-emerald-500';
+              const badgeClasses = isPending ? 'bg-amber-100 text-amber-700' : isPacked ? 'bg-indigo-100 text-indigo-700' : isOutForDelivery ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700';
 
               return (
                 <div key={order.id} className="group relative flex items-center justify-between rounded-2xl border border-slate-200/60 bg-white/50 p-3 md:p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10">
@@ -155,11 +165,12 @@ export const AdminDashboard: React.FC = () => {
                     <div className={`relative flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl ${iconBg} transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110`}>
                       {isPending && <Clock className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
                       {isPacked && <Package className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
-                      {!isPending && !isPacked && <CheckCircle2 className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
+                      {isOutForDelivery && <Truck className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
+                      {!isPending && !isPacked && !isOutForDelivery && <CheckCircle2 className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="truncate text-sm font-extrabold text-slate-900 transition-colors group-hover:text-indigo-600">{order.userName}</span>
-                      <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Order #{order.id.slice(0, 8)}</span>
+                      <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Order #{order.id}</span>
                     </div>
                   </div>
                   

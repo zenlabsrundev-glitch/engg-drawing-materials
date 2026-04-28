@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
-import { useDataStore } from '../../../store/dataStore';
-import { Table } from '../../ui/table';
-import { Button } from '../../ui/button';
-import { Plus, Edit, Trash2, Camera, RotateCcw } from 'lucide-react';
-import { Modal } from '../../ui/modal';
-import { Input } from '../../ui/input';
-import { Select } from '../../ui/select';
+import React, { useState, useEffect } from 'react';
+import { useDataStore } from '../../store/dataStore';
+import { Table } from '../ui/table';
+import { Button } from '../ui/button';
+import { Plus, Edit, Trash2, Camera, RotateCcw, Loader2 } from 'lucide-react';
+import { Modal } from '../ui/modal';
+import { Input } from '../ui/input';
+import { Select } from '../ui/select';
 import { motion } from 'framer-motion';
-import { Kit } from '../../../types';
+import { Kit } from '../../types';
+import { ConfirmModal } from '../ui/confirm-modal';
+import { AlertModal } from '../ui/alert-modal';
+import api from '../../services/api';
 
 export const ManageKitsPage: React.FC = () => {
-  const { kits, addKit, updateKit, deleteKit } = useDataStore();
+  const { kits, isLoading, addKit, updateKit, deleteKit, fetchKits } = useDataStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingKit, setEditingKit] = useState<Kit | null>(null);
+  const [kitToDelete, setKitToDelete] = useState<Kit | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     price: string;
@@ -35,14 +39,26 @@ export const ManageKitsPage: React.FC = () => {
     { label: 'Advanced', value: 'Advanced' }
   ];
 
-
   const [viewingKit, setViewingKit] = useState<Kit | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; type: 'error' | 'success' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
 
   const imageInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchKits();
+  }, [fetchKits]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData({ ...formData, image: reader.result as string });
@@ -51,41 +67,9 @@ export const ManageKitsPage: React.FC = () => {
     }
   };
 
-  const handleItemImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newItems = [...formData.items];
-        newItems[index] = { ...newItems[index], image: reader.result as string };
-        setFormData({ ...formData, items: newItems });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Item image handling removed as requested by user.
 
-  const addItem = () => {
-    setFormData({
-      ...formData,
-      items: [
-        ...formData.items,
-        { id: `item-${Date.now()}`, name: '', image: '' }
-      ]
-    });
-  };
-
-  const removeItem = (index: number) => {
-    setFormData({
-      ...formData,
-      items: formData.items.filter((_, i) => i !== index)
-    });
-  };
-
-  const updateItemName = (index: number, name: string) => {
-    const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], name };
-    setFormData({ ...formData, items: newItems });
-  };
+  // Item management flow removed as requested.
 
   const [originalImage, setOriginalImage] = useState<string>('');
 
@@ -116,28 +100,91 @@ export const ManageKitsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const kitData: Kit = {
-      id: editingKit ? editingKit.id : `kit-${Date.now()}`,
-      name: formData.name,
-      price: Number(formData.price),
-      category: formData.category as any,
-      items: formData.items.filter(i => i.name),
-      description: formData.description,
-      image: formData.image || 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&q=80&w=400'
-    };
+    setIsSubmitting(true);
+    let finalImageUrl = formData.image;
 
-    if (editingKit) {
-      updateKit(kitData);
-    } else {
-      addKit(kitData);
+    try {
+      // 1. Upload Image if a new file was selected
+      if (selectedImageFile) {
+        const uploadData = new FormData();
+        uploadData.append('image', selectedImageFile);
+        const uploadRes = await api.post('/upload', uploadData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        finalImageUrl = uploadRes.data.url;
+      }
+
+      // 2. Prepare Kit Data
+      const kitData: Kit = {
+        id: editingKit ? editingKit.id : `kit-${Date.now()}`,
+        name: formData.name,
+        price: Number(formData.price),
+        category: formData.category as any,
+        items: formData.items.filter((i: { id: string; name: string; image: string }) => i.name),
+        description: formData.description,
+        image: finalImageUrl || 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&q=80&w=400'
+      };
+
+      // 3. Save to Backend
+      if (editingKit) {
+        await updateKit(kitData);
+        setAlert({ isOpen: true, title: 'Success', message: 'Kit updated successfully.', type: 'success' });
+      } else {
+        await addKit(kitData);
+        setAlert({ isOpen: true, title: 'Success', message: 'Kit created successfully.', type: 'success' });
+      }
+      setIsModalOpen(false);
+      setSelectedImageFile(null);
+    } catch (error: any) {
+      console.error("Kit submission failed:", error);
+      setAlert({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to save kit. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsModalOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!kitToDelete) return;
+    try {
+      await deleteKit(kitToDelete.id);
+      setAlert({ isOpen: true, title: 'Success', message: 'Kit deleted successfully.', type: 'success' });
+    } catch (error: any) {
+      setAlert({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to delete kit.',
+        type: 'error'
+      });
+    } finally {
+      setKitToDelete(null);
+    }
   };
 
   return (
     <div className="space-y-6">
+      <AlertModal
+        isOpen={alert.isOpen}
+        onClose={() => setAlert(prev => ({ ...prev, isOpen: false }))}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+      />
+      <ConfirmModal
+        isOpen={!!kitToDelete}
+        onClose={() => setKitToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Kit"
+        message={`Are you sure you want to delete the kit "${kitToDelete?.name}"?`}
+        type="danger"
+        confirmText="Delete"
+      />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Manage Kits</h1>
         <Button onClick={() => handleOpenModal()} className="rounded-xl shadow-lg shadow-indigo-200">
@@ -147,7 +194,18 @@ export const ManageKitsPage: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-10">
-        {kits.map((kit) => (
+        {isLoading ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
+             <Loader2 className="h-10 w-10 animate-spin mb-4 text-indigo-500" />
+             <p className="font-bold uppercase tracking-widest text-xs">Loading Kits...</p>
+          </div>
+        ) : kits.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
+             <p className="font-bold uppercase tracking-widest text-xs">No Kits Found</p>
+             <p className="text-sm mt-2">Click "Create New Kit" to add your first kit.</p>
+          </div>
+        ) : (
+          kits.map((kit) => (
           <motion.div 
             key={kit.id}
             initial={{ opacity: 0, y: 20 }}
@@ -176,9 +234,7 @@ export const ManageKitsPage: React.FC = () => {
                   <Edit className="h-6 w-6" strokeWidth={2.5} />
                 </Button>
                 <Button 
-                  onClick={() => {
-                    if(confirm('Are you sure you want to delete this kit?')) deleteKit(kit.id);
-                  }}
+                  onClick={() => setKitToDelete(kit)}
                   className="h-12 w-12 rounded-2xl bg-white text-red-500 hover:bg-red-50 shadow-2xl transition-transform hover:scale-110 active:scale-95"
                 >
                   <Trash2 className="h-6 w-6" strokeWidth={2.5} />
@@ -199,7 +255,7 @@ export const ManageKitsPage: React.FC = () => {
               <div className="space-y-3">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Included Items</span>
                 <div className="flex flex-wrap gap-2">
-                  {kit.items.slice(0, 4).map((item, i) => (
+                  {kit.items.slice(0, 4).map((item: { id: string; name: string; image: string }, i: number) => (
                     <span key={i} className="px-3 py-1 bg-slate-50 text-slate-600 text-xs font-bold rounded-lg border border-slate-100">
                       {item.name}
                     </span>
@@ -223,7 +279,7 @@ export const ManageKitsPage: React.FC = () => {
             {/* Decorative bottom glow */}
             <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-indigo-500/5 rounded-full blur-3xl" />
           </motion.div>
-        ))}
+        )))}
       </div>
 
       {/* Kit Items Gallery Modal */}
@@ -239,24 +295,24 @@ export const ManageKitsPage: React.FC = () => {
             <p className="text-sm font-bold text-slate-500 max-w-md mx-auto">{viewingKit?.description}</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-4">
-            {viewingKit?.items.map((item, idx) => (
-              <motion.div 
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.1 }}
-                className="group bg-slate-50 rounded-[28px] p-3 border border-slate-100 hover:bg-white hover:shadow-xl transition-all duration-300"
-              >
-                <div className="aspect-video w-full rounded-[20px] overflow-hidden mb-4 bg-white border border-slate-100">
-                  <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
-                </div>
-                <div className="px-2 pb-1">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-1">Item {idx + 1}</span>
-                   <h4 className="text-lg font-black text-slate-900 tracking-tight">{item.name}</h4>
-                </div>
-              </motion.div>
-            ))}
+          {viewingKit?.image && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="aspect-video w-full rounded-[32px] overflow-hidden bg-slate-50 border border-slate-100 shadow-xl"
+            >
+              <img src={viewingKit.image} alt={viewingKit.name} className="h-full w-full object-cover" />
+            </motion.div>
+          )}
+
+          <div className="bg-slate-50 rounded-[32px] p-8 border border-slate-100 space-y-4">
+             <div className="flex items-center gap-3">
+               <div className="h-2 w-2 rounded-full bg-indigo-500" />
+               <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Kit Specifications</span>
+             </div>
+             <p className="text-slate-600 font-medium leading-relaxed">
+               {viewingKit?.description || 'This premium stationery kit includes all essential tools required for your engineering drawing and academic success. Professionally curated and packed for students.'}
+             </p>
           </div>
 
           <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
@@ -362,17 +418,27 @@ export const ManageKitsPage: React.FC = () => {
             label="Kit Name" 
             placeholder="e.g. Standard ED Kit" 
             value={formData.name}
-            onChange={e => setFormData({...formData, name: e.target.value})}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})}
             required 
             className="rounded-xl"
           />
+          <div className="space-y-1.5">
+            <label className="text-sm font-black uppercase tracking-widest text-slate-400">Description</label>
+            <textarea
+              placeholder="Brief description of the kit contents..."
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Input 
               label="Price (₹)" 
               type="number" 
               placeholder="1250" 
               value={formData.price}
-              onChange={e => setFormData({...formData, price: e.target.value})}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, price: e.target.value})}
               required 
               className="rounded-xl"
             />
@@ -386,81 +452,18 @@ export const ManageKitsPage: React.FC = () => {
               />
             </div>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-black uppercase tracking-widest text-slate-400">Kit Items</label>
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                onClick={addItem}
-                className="text-indigo-600 hover:text-indigo-700 font-bold"
-              >
-                <Plus className="h-4 w-4 mr-1" /> Add Item
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {formData.items.map((item, index) => (
-                <div key={item.id} className="group relative flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:shadow-md">
-                  <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-white border border-slate-200 flex-shrink-0">
-                    {item.image ? (
-                      <img src={item.image} alt="Item" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-slate-300">
-                        <Camera className="h-6 w-6" />
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.accept = 'image/*';
-                        input.onchange = (e) => handleItemImageChange(index, e as any);
-                        input.click();
-                      }}
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex-grow">
-                    <input
-                      type="text"
-                      placeholder="Item name (e.g. Mini Drafter)"
-                      value={item.name}
-                      onChange={(e) => updateItemName(index, e.target.value)}
-                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-900 placeholder:text-slate-400"
-                    />
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-              
-              {formData.items.length === 0 && (
-                <div 
-                  onClick={addItem}
-                  className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:border-indigo-300 hover:text-indigo-500 cursor-pointer transition-all"
-                >
-                  <Plus className="h-6 w-6 mb-2" />
-                  <span className="text-xs font-bold uppercase tracking-widest">No items added</span>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Kit Items section removed as requested */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold">Cancel</Button>
-            <Button type="submit" className="rounded-xl px-8 font-bold shadow-lg shadow-indigo-200">
-              {editingKit ? 'Update Kit' : 'Create Kit'}
+            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold" disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" className="rounded-xl px-8 font-bold shadow-lg shadow-indigo-200" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {editingKit ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                editingKit ? 'Update Kit' : 'Create Kit'
+              )}
             </Button>
           </div>
         </form>

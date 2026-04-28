@@ -11,6 +11,7 @@ export interface User {
   address?: string;
   phoneNumber?: string;
   location?: { lat: number; lng: number };
+  dateOfBirth?: string;
   createdAt: string;
 }
 
@@ -30,7 +31,7 @@ export interface Kit {
   category: string;
 }
 
-export type OrderStatus = 'Pending' | 'Packed' | 'Delivered';
+export type OrderStatus = 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered';
 
 export interface OrderItem {
   id: string;

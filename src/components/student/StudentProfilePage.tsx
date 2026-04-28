@@ -1,12 +1,15 @@
 import React from 'react';
-import { useAuthStore } from '../../../store/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { User, Mail, Shield, Calendar, Landmark, MapPin, Phone, Edit3, Save, X, KeyRound } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Input } from '../../ui/input';
+import { Input } from '../ui/input';
+import { Select } from '../ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ForgotPasswordModal } from '../../auth/login/login';
-import { useDataStore } from '../../../store/dataStore';
+import { ForgotPasswordModal } from '../auth/login/login';
+import { useDataStore } from '../../store/dataStore';
+import api from '../../services/api';
+import { LocationPickerModal } from '../shared/LocationPickerModal';
 
 export const StudentProfilePage: React.FC = () => {
   const { user, updateUser } = useAuthStore();
@@ -17,23 +20,27 @@ export const StudentProfilePage: React.FC = () => {
   const [address, setAddress] = React.useState(user?.address || '');
   const [phoneNumber, setPhoneNumber] = React.useState(user?.phoneNumber || '');
   const [email, setEmail] = React.useState(user?.email || '');
+  const [year, setYear] = React.useState(user?.year || '');
   const [isSaving, setIsSaving] = React.useState(false);
   const [showResetModal, setShowResetModal] = React.useState(false);
+  const [showLocationPicker, setShowLocationPicker] = React.useState(false);
 
   if (!user) return null;
 
   const handleSave = async () => {
     if (!user) return;
     setIsSaving(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const updates = { address, phoneNumber, email };
-    updateUser(updates);
-    updateUserInStore(user.id, updates);
-    
-    setIsSaving(false);
-    setIsEditing(false);
+    try {
+      const updates = { address, phoneNumber, email, year };
+      await api.put(`/users/${user.id}`, updates);
+      updateUser(updates);
+      updateUserInStore(user.id, updates);
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+    }
   };
 
   const profileItems = [
@@ -48,7 +55,17 @@ export const StudentProfilePage: React.FC = () => {
       setter: setEmail 
     },
     { label: 'Department', value: user.department, icon: Landmark, readonly: true },
-    { label: 'Academic Year', value: user.year, icon: Calendar, readonly: true },
+    { 
+      label: 'Academic Year', 
+      value: user.year || 'Not set', 
+      icon: Calendar, 
+      editable: true,
+      fieldName: 'year',
+      currentValue: year,
+      setter: setYear,
+      isSelect: true,
+      options: ['1st Year', '2nd Year', '3rd Year', '4th Year']
+    },
     { 
       label: 'Delivery Address', 
       value: user.address || 'Not set', 
@@ -56,7 +73,8 @@ export const StudentProfilePage: React.FC = () => {
       editable: true,
       fieldName: 'address',
       currentValue: address,
-      setter: setAddress 
+      setter: setAddress,
+      hasMapPicker: true
     },
     { 
       label: 'Phone Number', 
@@ -70,15 +88,15 @@ export const StudentProfilePage: React.FC = () => {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-2xl space-y-8 px-2 md:px-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Profile</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">My Profile</h1>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Your details for auto-filling orders</p>
         </div>
         <Button 
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`font-bold rounded-xl shadow-sm transition-all ${isEditing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-white text-indigo-600 border border-slate-200 hover:bg-slate-50'}`}
+          className={`font-bold rounded-xl shadow-sm transition-all shrink-0 ${isEditing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-white text-indigo-600 border border-slate-200 hover:bg-slate-50'}`}
           disabled={isSaving}
         >
           {isSaving ? (
@@ -107,20 +125,41 @@ export const StudentProfilePage: React.FC = () => {
                   <div className="space-y-0.5 flex-1">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{item.label}</span>
                     {item.editable && isEditing ? (
-                      <input 
-                        type="text"
-                        value={item.currentValue}
-                        onChange={(e) => item.setter(e.target.value)}
-                        className="w-full bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-slate-900 placeholder:text-slate-300"
-                        placeholder={`Enter ${item.label.toLowerCase()}`}
-                        autoFocus={item.fieldName === 'address'}
-                      />
+                      item.isSelect ? (
+                        <Select
+                          value={item.currentValue}
+                          onChange={(val: any) => item.setter(val)}
+                          options={item.options.map((opt: string) => ({ label: opt, value: opt }))}
+                          placeholder="Select Year"
+                          className="h-9 rounded-xl bg-indigo-50 border-indigo-200 font-bold text-sm"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 w-full">
+                          <input 
+                            type="text"
+                            value={item.currentValue}
+                            onChange={(e) => item.setter(e.target.value)}
+                            className="w-full bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-slate-900 placeholder:text-slate-300"
+                            placeholder={`Enter ${item.label.toLowerCase()}`}
+                          />
+                          {item.hasMapPicker && (
+                            <button
+                              type="button"
+                              onClick={() => setShowLocationPicker(true)}
+                              className="h-8 w-8 shrink-0 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center hover:bg-indigo-200 transition-all active:scale-90"
+                              title="Pick from map"
+                            >
+                              <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            </button>
+                          )}
+                        </div>
+                      )
                     ) : (
                       <p className="text-sm font-bold text-slate-900 leading-none">{item.value}</p>
                     )}
                   </div>
-                  {item.editable && isEditing && (
-                    <X className="h-4 w-4 text-slate-300 hover:text-red-500 cursor-pointer" onClick={() => item.setter(item.fieldName === 'address' ? user.address || '' : user.phoneNumber || '')} />
+                  {item.editable && isEditing && !item.isSelect && !item.hasMapPicker && (
+                    <X className="h-4 w-4 text-slate-300 hover:text-red-500 cursor-pointer" onClick={() => item.setter(item.fieldName === 'address' ? user.address || '' : item.fieldName === 'phoneNumber' ? user.phoneNumber || '' : user.email || '')} />
                   )}
                 </div>
             ))}
@@ -142,6 +181,20 @@ export const StudentProfilePage: React.FC = () => {
         isOpen={showResetModal}
         onClose={() => setShowResetModal(false)}
         onResetSuccess={() => setShowResetModal(false)}
+      />
+
+      <LocationPickerModal
+        isOpen={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        initialAddress={address}
+        onConfirm={(location: any) => {
+          // Build full address string: "Area, District, State - Pincode"
+          const fullAddress = [
+            location.address,
+            location.pincode ? `- ${location.pincode}` : ''
+          ].filter(Boolean).join(' ');
+          setAddress(fullAddress);
+        }}
       />
     </div>
   );

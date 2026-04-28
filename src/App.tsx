@@ -9,41 +9,42 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 
 // Pages
 import { Login } from './components/auth/login/login';
-import { StudentCartPage } from './components/student/cart/StudentCartPage';
-import { StudentOrdersPage } from './components/student/orders/StudentOrdersPage';
-import { StudentProfilePage } from './components/student/profile/StudentProfilePage';
-import { AdminDashboard } from './components/admin/dashboard/AdminDashboard';
-import { ManageOrdersPage } from './components/admin/orders/ManageOrdersPage';
-import { ManageUsersPage } from './components/admin/users/ManageUsersPage';
-import { ManageKitsPage } from './components/admin/kits/ManageKitsPage';
-import { AdminReportsPage } from './components/admin/reports/AdminReportsPage';
-import { AdminSettingsPage } from './components/admin/settings/AdminSettingsPage';
-import { StudentKitsPage } from './components/student/kits/StudentKitsPage';
+import { StudentCartPage } from './components/student/StudentCartPage';
+import { StudentOrdersPage } from './components/student/StudentOrdersPage';
+import { StudentProfilePage } from './components/student/StudentProfilePage';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { ManageOrdersView as ManageOrdersPage } from './components/admin/ManageOrdersView';
+import { ManageUsersView as ManageUsersPage } from './components/admin/ManageUsersView';
+import { ManageKitsPage } from './components/admin/ManageKitsPage';
+import { ReportsView as AdminReportsPage } from './components/admin/ReportsView';
+import { AdminSettingsPage } from './components/admin/AdminSettingsPage';
+import { StudentKitsPage } from './components/student/StudentKitsPage';
 
 
 const App: React.FC = () => {
   const initData = useDataStore(state => state.initData);
-  const { role, isAuthenticated } = useAuthStore();
+  const { role, user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    initData();
-  }, [initData]);
+    if (isAuthenticated && role) {
+      initData(role, user);
+    }
+  }, [initData, role, user, isAuthenticated]);
 
   return (
     <BrowserRouter>
       <Routes>
-        {/* Auth Routes */}
+        {/* Auth-only Routes (login card layout) */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
         </Route>
 
-        {/* Student Routes */}
+        {/* Public + Student Routes under DashboardLayout */}
         <Route 
           path="/student" 
           element={
-            isAuthenticated && role === 'student' 
-              ? <DashboardLayout /> 
+            isAuthenticated && (role === 'student' || role === 'admin')
+              ? <DashboardLayout />
               : <Navigate to="/login" replace />
           }
         >
@@ -54,7 +55,7 @@ const App: React.FC = () => {
           <Route path="profile" element={<StudentProfilePage />} />
         </Route>
 
-        {/* Admin Routes */}
+        {/* Protected Admin Routes */}
         <Route 
           path="/admin" 
           element={
@@ -70,6 +71,13 @@ const App: React.FC = () => {
           <Route path="reports" element={<AdminReportsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
+
+        {/* Root → login if not authenticated, dashboard if authenticated */}
+        <Route path="/" element={
+          isAuthenticated
+            ? <Navigate to={role === 'admin' ? '/admin' : '/student/kits'} replace />
+            : <Navigate to="/login" replace />
+        } />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

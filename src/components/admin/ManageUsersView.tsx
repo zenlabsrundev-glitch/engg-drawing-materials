@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useDataStore } from '../../../store/dataStore';
-import { Table } from '../../ui/table';
+import { useDataStore } from '../../store/dataStore';
+import { Table } from '../ui/table';
 import { Search, Trash2, UserPlus, Users, GraduationCap, Building2, Eye, Filter } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Modal } from '../../ui/modal';
-import { Select } from '../../ui/select';
+import { Button } from '../ui/button';
+import { Modal } from '../ui/modal';
+import { Select } from '../ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from '../ui/confirm-modal';
 
 const DEPARTMENTS = [
   'All Departments',
@@ -23,6 +24,7 @@ export const ManageUsersView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('All Departments');
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -106,11 +108,7 @@ export const ManageUsersView: React.FC = () => {
             size="lg" 
             variant="ghost" 
             className="h-11 w-11 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-2xl transition-all active:scale-90 border border-transparent hover:border-red-100"
-            onClick={() => {
-              if(confirm(`Remove student ${user.fullName} from the system?`)) {
-                deleteUser(user.id);
-              }
-            }}
+            onClick={() => setUserToDelete(user)}
           >
             <Trash2 className="h-5 w-5" strokeWidth={2.5} />
           </Button>
@@ -121,6 +119,15 @@ export const ManageUsersView: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-10">
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={() => userToDelete && deleteUser(userToDelete.id)}
+        title="Remove Student"
+        message={`Are you sure you want to remove ${userToDelete?.fullName} from the system?`}
+        type="danger"
+        confirmText="Remove"
+      />
       {/* Top Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2 md:px-0">
         <div>
@@ -280,9 +287,7 @@ export const ManageUsersView: React.FC = () => {
                   size="sm" 
                   variant="ghost" 
                   className="h-9 w-9 p-0 text-red-500 hover:bg-red-50 rounded-xl"
-                  onClick={() => {
-                    if(confirm(`Remove student ${user.fullName}?`)) deleteUser(user.id);
-                  }}
+                  onClick={() => setUserToDelete(user)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -367,12 +372,24 @@ export const ManageUsersView: React.FC = () => {
                 <p className="text-sm font-bold text-slate-900">{selectedUser?.year}</p>
              </div>
              <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date of Birth</span>
+                <p className="text-sm font-bold text-slate-900">{selectedUser?.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not provided'}</p>
+             </div>
+             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</span>
                 <p className="text-sm font-bold text-slate-900">{selectedUser?.email}</p>
              </div>
              <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Number</span>
+                <p className="text-sm font-bold text-slate-900">{selectedUser?.phoneNumber || 'Not provided'}</p>
+             </div>
+             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Delivery Address</span>
+                <p className="text-sm font-bold text-slate-900">{selectedUser?.address || 'Not provided'}</p>
+             </div>
+             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Joined Date</span>
-                <p className="text-sm font-bold text-slate-900">{new Date(selectedUser?.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-sm font-bold text-slate-900">{selectedUser?.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}</p>
              </div>
           </div>
 

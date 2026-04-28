@@ -1,9 +1,9 @@
 import React from 'react';
-import { useDataStore } from '../../../store/dataStore';
+import { useDataStore } from '../../store/dataStore';
 import { BarChart3, PieChart, TrendingUp, Users, Download, Archive } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Table } from '../../ui/table';
-import { Badge } from '../../ui/badge';
+import { Button } from '../ui/button';
+import { Table } from '../ui/table';
+import { Badge } from '../ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -409,7 +409,7 @@ export const ReportsView: React.FC = () => {
                 <Archive className="h-5 w-5" />
              </div>
              <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight uppercase tracking-wider">Reports Archive</h3>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight uppercase tracking-wider">Order Archive</h3>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">History of completed operations</p>
              </div>
           </div>
@@ -426,8 +426,42 @@ export const ReportsView: React.FC = () => {
         
         {archivedOrders.length > 0 ? (
           <div className="p-2">
-            <div className="overflow-hidden rounded-[32px] border border-slate-50">
+            {/* Desktop View */}
+            <div className="hidden lg:block overflow-hidden rounded-[32px] border border-slate-50">
               <Table columns={columns as any} data={archivedOrders} />
+            </div>
+
+            {/* Mobile View */}
+            <div className="lg:hidden p-2 space-y-4">
+              {archivedOrders.map((order) => (
+                <div key={order.id} className="p-5 rounded-3xl bg-slate-50/50 border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="delivered" className="bg-white text-slate-500 border-slate-100">Archived</Badge>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">#{order.id}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-indigo-600 font-black shadow-sm">
+                      {order.userName.charAt(0)}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-sm font-black text-slate-900 truncate">{order.userName}</span>
+                      <span className="text-[10px] font-bold text-slate-500">{order.userDepartment || 'General'}</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white rounded-2xl border border-white shadow-sm">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Kits Purchased</span>
+                    <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                      {order.items.map(i => i.kitName).join(', ')}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </span>
+                    <span className="text-sm font-black text-slate-900">₹{order.totalAmount}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ) : (

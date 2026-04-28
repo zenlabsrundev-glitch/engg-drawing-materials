@@ -144,7 +144,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         )}
       </AnimatePresence>
 
-      <div className="flex pt-20">
+      <div className="flex pt-14 md:pt-20">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main
           className={`w-full p-4 md:p-8 overflow-hidden transition-all duration-500 ${

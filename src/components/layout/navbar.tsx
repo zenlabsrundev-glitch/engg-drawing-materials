@@ -60,9 +60,9 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
         }}
       />
 
-      <div className="relative mx-auto flex h-20 max-w-full items-center justify-between px-4 md:px-6">
+      <div className="relative mx-auto flex h-14 md:h-20 max-w-full items-center justify-between px-2 md:px-6">
         <div className="flex-1 flex items-center">
-          <div className="flex items-center group cursor-default scale-75 md:scale-90 origin-left">
+          <div className="flex items-center group cursor-default scale-[0.6] md:scale-90 origin-left">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 z-10"
               style={{
@@ -102,10 +102,13 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
         </div>
 
         {/* Center: Logo */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
-          <div className="flex items-center gap-2 md:gap-3">
+        <div 
+          onClick={() => navigate(role === 'admin' ? '/admin' : '/student/kits')}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center cursor-pointer group"
+        >
+          <div className="flex items-center gap-1 md:gap-3">
             <div
-              className="flex h-12 w-12 md:h-16 md:w-16 items-center justify-center transition-all duration-500 hover:scale-110 rounded-full overflow-hidden"
+              className="flex h-9 w-9 md:h-16 md:w-16 items-center justify-center transition-all duration-500 group-hover:scale-110 rounded-full overflow-hidden"
             >
               <img
                 src="/logo.png"
@@ -115,21 +118,18 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
             </div>
             <div className="flex flex-col hidden xs:flex">
               <span
-                className="text-base md:text-lg font-black tracking-tight leading-none"
+                className="text-base md:text-lg font-black tracking-tight leading-none transition-all duration-500 group-hover:tracking-wider"
                 style={{
                   background: 'linear-gradient(90deg, #fff 30%, #a5b4fc 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 12px rgba(165,180,252,0.7)) drop-shadow(0 0 25px rgba(99,102,241,0.4))'
+                  filter: 'drop-shadow(0 0 12px rgba(165,180,252,0.7))'
                 }}
               >
                 {storeName.split(' ')[0]}
               </span>
               <span className="text-[7px] md:text-[9px] font-bold uppercase tracking-[0.2em]"
-                style={{
-                  color: 'rgba(165,180,252,1)',
-                  textShadow: '0 0 15px rgba(165,180,252,0.8), 0 0 30px rgba(99,102,241,0.5)'
-                }}
+                style={{ color: 'rgba(165,180,252,1)' }}
               >
                 {storeName.split(' ').slice(1).join(' ')}
               </span>
@@ -138,7 +138,20 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
         </div>
 
         {/* Right section */}
-        <div className="flex flex-1 items-center justify-end gap-3">
+        <div className="flex flex-1 items-center justify-end gap-1.5 md:gap-3">
+          {/* Admin Switcher */}
+          {role === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin')}
+              className="hidden sm:flex h-9 px-4 gap-2 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest"
+            >
+              <Layout className="h-4 w-4" />
+              Go to Dashboard
+            </Button>
+          )}
+
           {/* Sidebar Toggle - Right Side */}
           {onToggleSidebar && (
             <motion.button
@@ -150,7 +163,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
                   : ['none', '0 0 12px rgba(255,255,255,0.1)', 'none']
               }}
               transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 hover:brightness-125 group relative overflow-hidden"
+              className="flex h-8 w-8 md:h-11 md:w-11 items-center justify-center rounded-xl md:rounded-2xl transition-all duration-300 hover:brightness-125 group relative overflow-hidden"
               style={{
                 background: sidebarOpen
                   ? 'linear-gradient(135deg, rgba(99,102,241,0.35), rgba(168,85,247,0.25))'
@@ -166,42 +179,40 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
               />
 
               {sidebarOpen ? (
-                <PanelLeftClose className="h-5 w-5 text-indigo-300 relative z-10" strokeWidth={2.5} />
+                <PanelLeftClose className="h-4 w-4 md:h-5 md:w-5 text-indigo-300 relative z-10" strokeWidth={2.5} />
               ) : (
-                <PanelLeftOpen className="h-5 w-5 text-white/80 relative z-10" strokeWidth={2.5} />
+                <PanelLeftOpen className="h-4 w-4 md:h-5 md:w-5 text-white/80 relative z-10" strokeWidth={2.5} />
               )}
             </motion.button>
           )}
 
-          {/* Cart button for students */}
-          {user?.role === 'student' && (
-            <button
-              onClick={() => navigate('/student/cart')}
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 hover:scale-105"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-            >
-              <ShoppingCart className="h-5 w-5 text-white/70" strokeWidth={2.5} />
-              {cartCount > 0 && (
-                <span
-                  className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white ring-2 ring-[#0f0c29]"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}
-                >
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          )}
+          {/* Cart button */}
+          <button
+            onClick={() => navigate('/student/cart')}
+            className="relative flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl transition-all duration-300 hover:scale-105"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+          >
+            <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 text-white/70" strokeWidth={2.5} />
+            {cartCount > 0 && (
+              <span
+                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white ring-2 ring-[#0f0c29]"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}
+              >
+                {cartCount}
+              </span>
+            )}
+          </button>
 
           {/* Bell notification */}
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 hover:scale-105 ${showNotifications ? 'bg-indigo-500/20' : ''}`}
+              className={`flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl transition-all duration-300 hover:scale-105 ${showNotifications ? 'bg-indigo-500/20' : ''}`}
               style={{
                 background: showNotifications ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.06)',
                 border: showNotifications ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.1)',
@@ -209,7 +220,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
               onMouseEnter={e => !showNotifications && (e.currentTarget.style.background = 'rgba(99,102,241,0.2)')}
               onMouseLeave={e => !showNotifications && (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             >
-              <Bell className={`h-5 w-5 transition-colors duration-300 ${showNotifications ? 'text-indigo-300' : 'text-white/70'}`} strokeWidth={2.5} />
+              <Bell className={`h-4 w-4 md:h-5 md:w-5 transition-colors duration-300 ${showNotifications ? 'text-indigo-300' : 'text-white/70'}`} strokeWidth={2.5} />
               {unreadCount > 0 && (
                 <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] border border-[#0f0c29]" />
               )}

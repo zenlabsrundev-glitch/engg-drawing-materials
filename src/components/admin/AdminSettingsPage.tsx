@@ -14,25 +14,34 @@ import {
   Image as ImageIcon,
   Trash2
 } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { useAuthStore } from '../../../store/authStore';
-import { useSettingsStore } from '../../../store/settingsStore';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { useAuthStore } from '../../store/authStore';
+import { useSettingsStore } from '../../store/settingsStore';
+import { AlertModal } from '../ui/alert-modal';
+import api from '../../services/api';
 
 export const AdminSettingsPage: React.FC = () => {
   const { user, updateUser } = useAuthStore();
   const settings = useSettingsStore();
   
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isSending, setIsSending] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState('Profile saved successfully!');
+  const [alert, setAlert] = React.useState<{ isOpen: boolean; title: string; message: string; type: 'error' | 'success' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
   
   // Local form states
   const [firstName, setFirstName] = React.useState(user?.fullName?.split(' ')[0] || '');
   const [lastName, setLastName] = React.useState(user?.fullName?.split(' ').slice(1).join(' ') || '');
   const [storeName, setStoreName] = React.useState(settings.storeName);
   const [supportLine, setSupportLine] = React.useState(settings.supportLine);
-  const [recoveryEmail, setRecoveryEmail] = React.useState('');
+  const [recoveryEmail, setRecoveryEmail] = React.useState(user?.email || '');
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -65,32 +74,80 @@ export const AdminSettingsPage: React.FC = () => {
     handleAction('Profile photo removed!');
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     setIsSaving(true);
-    updateUser({ fullName: `${firstName} ${lastName}`.trim() });
-    settings.updateSettings({
-      storeName,
-      supportLine,
-    });
+    try {
+      // 1. Update in Backend
+      await api.put(`/users/${user?.id}`, {
+        fullName: `${firstName} ${lastName}`.trim(),
+        email: recoveryEmail
+      });
 
-    setTimeout(() => {
+      // 2. Update in Stores
+      updateUser({ 
+        fullName: `${firstName} ${lastName}`.trim(),
+        email: recoveryEmail
+      });
+      
+      settings.updateSettings({
+        storeName,
+        supportLine,
+      });
+
       setIsSaving(false);
-      setSuccessMessage('Profile & Store settings synchronized!');
+      setSuccessMessage('Profile & Store settings updated!');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1000);
+    } catch (err: any) {
+      setIsSaving(false);
+      setAlert({
+        isOpen: true,
+        title: 'Save Failed',
+        message: err.response?.data?.message || 'Failed to update profile.',
+        type: 'error'
+      });
+    }
   };
 
-  const handleSendCredentials = () => {
+  const handleSendCredentials = async () => {
     if (!recoveryEmail || !recoveryEmail.includes('@')) {
-       alert('Please enter a valid Gmail address.');
+       setAlert({
+         isOpen: true,
+         title: 'Invalid Email',
+         message: 'Please enter a valid Gmail address.',
+         type: 'error'
+       });
        return;
     }
-    handleAction(`Credentials sent to ${recoveryEmail}`);
+
+    setIsSending(true);
+    try {
+      await api.post('/auth/admin-recovery', { email: recoveryEmail, adminId: user?.id });
+      setIsSending(false);
+      setSuccessMessage(`Credentials sent to ${recoveryEmail}`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err: any) {
+      setIsSending(false);
+      setAlert({
+        isOpen: true,
+        title: 'Recovery Failed',
+        message: err.response?.data?.message || 'Failed to send credentials.',
+        type: 'error'
+      });
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/30 p-8 md:p-12 relative overflow-hidden pb-24">
+    <>
+      <AlertModal
+        isOpen={alert.isOpen}
+        onClose={() => setAlert(prev => ({ ...prev, isOpen: false }))}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+      />
+      <div className="min-h-screen bg-slate-50/30 p-4 md:p-8 lg:p-12 relative overflow-hidden pb-24">
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -118,22 +175,22 @@ export const AdminSettingsPage: React.FC = () => {
 
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Admin Profile</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Admin Profile</h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] mt-1.5 flex items-center gap-2">
                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                {settings.storeName} Management
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
              <Button 
-               className="h-11 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all active:scale-95 group relative overflow-hidden"
+               className="h-11 px-6 md:px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center gap-2 transition-all active:scale-95 group relative overflow-hidden"
                onClick={handleSaveProfile}
                disabled={isSaving}
              >
                 {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 transition-transform group-hover:rotate-12" />}
-                {isSaving ? 'Saving...' : 'Save All Changes'}
+                {isSaving ? 'Saving...' : 'Save All'}
              </Button>
           </div>
         </div>
@@ -254,14 +311,20 @@ export const AdminSettingsPage: React.FC = () => {
                 <Button 
                    className="h-12 px-8 rounded-2xl bg-slate-900 hover:bg-black text-white font-black text-[11px] uppercase tracking-[0.15em] shadow-lg flex items-center gap-2 group"
                    onClick={handleSendCredentials}
+                   disabled={isSending}
                 >
-                   <Send className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                   Send Credentials
+                   {isSending ? (
+                     <RefreshCw className="h-4 w-4 animate-spin" />
+                   ) : (
+                     <Send className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                   )}
+                   {isSending ? 'Sending...' : 'Send Credentials'}
                 </Button>
              </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
