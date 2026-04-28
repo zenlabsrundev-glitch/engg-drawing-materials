@@ -72,12 +72,8 @@ const App: React.FC = () => {
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
 
-        {/* Root → login if not authenticated, dashboard if authenticated */}
-        <Route path="/" element={
-          isAuthenticated
-            ? <Navigate to={role === 'admin' ? '/admin' : '/student/kits'} replace />
-            : <Navigate to="/login" replace />
-        } />
+        {/* Root always goes to login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
