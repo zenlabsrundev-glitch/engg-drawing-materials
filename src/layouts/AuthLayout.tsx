@@ -6,6 +6,10 @@ import { ShieldCheck } from 'lucide-react';
 export const AuthLayout: React.FC = () => {
   const { isAuthenticated, role } = useAuthStore();
 
+  if (isAuthenticated) {
+    return <Navigate to={role === 'admin' ? '/admin' : '/student/kits'} replace />;
+  }
+
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden" 
          style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>

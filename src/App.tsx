@@ -72,8 +72,15 @@ const App: React.FC = () => {
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
 
-        {/* Root always goes to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Root Route: Smart redirect based on auth status */}
+        <Route 
+          path="/" 
+          element={
+            isAuthenticated 
+              ? <Navigate to={role === 'admin' ? '/admin' : '/student/kits'} replace /> 
+              : <Navigate to="/login" replace />
+          } 
+        />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

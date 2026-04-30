@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { User, Role } from '../types';
 
 interface AuthStore {
@@ -27,6 +27,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'campus-kit-auth',
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
