@@ -6,7 +6,7 @@
  */
 
 export const ENV = {
-  API_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  API_URL: process.env.REACT_APP_API_URL || 'https://stationary-pre-pack-order-hub-backend.vercel.app',
   NODE_ENV: process.env.NODE_ENV || 'development',
   IS_PROD: process.env.NODE_ENV === 'production',
 };

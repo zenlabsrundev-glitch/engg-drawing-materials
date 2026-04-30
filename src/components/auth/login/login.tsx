@@ -120,7 +120,7 @@ export const Login: React.FC = () => {
         setAlert({
           isOpen: true,
           title: 'Server Unreachable',
-          message: 'Backend server (Port 5000) is not running.',
+        message: 'Backend server is not reachable. Please check your connection.',
           type: 'error'
         });
       } else {
