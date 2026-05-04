@@ -122,7 +122,7 @@ export const AdminSettingsPage: React.FC = () => {
 
     setIsSending(true);
     try {
-      await api.post('/auth/admin-recovery', { email: recoveryEmail, adminId: user?.id });
+      await api.post('/auth/recover-credentials', { email: recoveryEmail, userId: user?.id });
       setIsSending(false);
       setSuccessMessage(`Credentials sent to ${recoveryEmail}`);
       setShowSuccess(true);

@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useDataStore } from '../../store/dataStore';
 import { Table } from '../ui/table';
-import { Search, Trash2, UserPlus, Users, GraduationCap, Building2, Eye, Filter } from 'lucide-react';
+import { Search, Trash2, UserPlus, Users, GraduationCap, Building2, Eye, Filter, Send, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Modal } from '../ui/modal';
 import { Select } from '../ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { AlertModal } from '../ui/alert-modal';
+import api from '../../services/api';
 
 const DEPARTMENTS = [
   'All Departments',
@@ -19,14 +21,104 @@ const DEPARTMENTS = [
 
 const DEPT_OPTIONS = DEPARTMENTS.map(dept => ({ label: dept, value: dept }));
 
-export const ManageUsersView: React.FC = () => {
+export const ManageUsersPage: React.FC = () => {
   const { users, deleteUser } = useDataStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('All Departments');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newStudentData, setNewStudentData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    department: 'Computer Science',
+    year: '1st Year',
+    dateOfBirth: '',
+    phoneNumber: '',
+    address: ''
+  });
+  const [isCreating, setIsCreating] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSending, setIsSending] = useState<string | null>(null);
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; type: 'error' | 'success' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
   const itemsPerPage = 12;
+
+  const handleSendCredentials = async (student: any) => {
+    setIsSending(student.id);
+    try {
+      await api.post('/auth/recover-credentials', { 
+        email: student.email, 
+        userId: student.id 
+      });
+      setAlert({
+        isOpen: true,
+        title: 'Sent!',
+        message: `Credentials successfully sent to ${student.email}`,
+        type: 'success'
+      });
+    } catch (err: any) {
+      setAlert({
+        isOpen: true,
+        title: 'Failed',
+        message: err.response?.data?.message || 'Failed to send credentials.',
+        type: 'error'
+      });
+    } finally {
+      setIsSending(null);
+    }
+  };
+
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStudentData.email.endsWith('@gmail.com')) {
+      setAlert({
+        isOpen: true,
+        title: 'Invalid Email',
+        message: 'Only @gmail.com addresses are accepted.',
+        type: 'error'
+      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await api.post('/auth/register', {
+        fullName: `${newStudentData.firstName} ${newStudentData.lastName}`,
+        email: newStudentData.email,
+        role: 'student',
+        department: newStudentData.department,
+        year: newStudentData.year,
+        dateOfBirth: newStudentData.dateOfBirth,
+        phoneNumber: newStudentData.phoneNumber,
+        address: newStudentData.address
+      });
+      
+      setAlert({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Student created and credentials sent to Gmail.',
+        type: 'success'
+      });
+      setIsCreateModalOpen(false);
+      // Refresh the user list
+      useDataStore.getState().fetchUsers();
+    } catch (err: any) {
+      setAlert({
+        isOpen: true,
+        title: 'Creation Failed',
+        message: err.response?.data?.message || 'Failed to create student.',
+        type: 'error'
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const students = useMemo(() => 
     users.filter(u => u.role === 'student' && 
@@ -107,6 +199,16 @@ export const ManageUsersView: React.FC = () => {
           <Button 
             size="lg" 
             variant="ghost" 
+            className="h-11 w-11 p-0 text-amber-600 hover:bg-amber-50 hover:text-amber-700 rounded-2xl transition-all active:scale-90 border border-transparent hover:border-amber-100 shadow-sm"
+            onClick={() => handleSendCredentials(user)}
+            disabled={isSending === user.id}
+            title="Send Credentials to Gmail"
+          >
+            {isSending === user.id ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" strokeWidth={2.5} />}
+          </Button>
+          <Button 
+            size="lg" 
+            variant="ghost" 
             className="h-11 w-11 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-2xl transition-all active:scale-90 border border-transparent hover:border-red-100"
             onClick={() => setUserToDelete(user)}
           >
@@ -119,6 +221,13 @@ export const ManageUsersView: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-10">
+      <AlertModal
+        isOpen={alert.isOpen}
+        onClose={() => setAlert(prev => ({ ...prev, isOpen: false }))}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+      />
       <ConfirmModal
         isOpen={!!userToDelete}
         onClose={() => setUserToDelete(null)}
@@ -141,7 +250,15 @@ export const ManageUsersView: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-          <div className="relative group w-full sm:min-w-[240px] lg:min-w-[280px]">
+          <Button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-full sm:w-auto h-14 px-8 rounded-[28px] bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
+          >
+            <UserPlus className="h-5 w-5" strokeWidth={3} />
+            <span>Create Student</span>
+          </Button>
+
+          <div className="relative group w-full sm:min-w-[200px] lg:min-w-[240px]">
              <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
                 <Filter className="h-5 w-5 text-slate-400" strokeWidth={3} />
              </div>
@@ -291,6 +408,15 @@ export const ManageUsersView: React.FC = () => {
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-9 w-9 p-0 text-amber-600 hover:bg-amber-50 rounded-xl ml-2"
+                  onClick={() => handleSendCredentials(user)}
+                  disabled={isSending === user.id}
+                >
+                  {isSending === user.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
               </div>
             </motion.div>
           ))}
@@ -351,57 +477,147 @@ export const ManageUsersView: React.FC = () => {
         title=""
         size="md"
       >
-        <div className="p-2 space-y-8">
-          <div className="flex flex-col items-center text-center space-y-4">
-             <div className="h-24 w-24 rounded-[32px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-indigo-200">
+        <div className="p-0 space-y-3">
+          {/* Header - Compact Row */}
+          <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-black shadow-lg shrink-0">
                 {selectedUser?.fullName.charAt(0)}
              </div>
-             <div>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight">{selectedUser?.fullName}</h2>
-                <span className="text-sm font-bold text-indigo-600 uppercase tracking-[0.2em]">{selectedUser?.id}</span>
+             <div className="min-w-0">
+                <h2 className="text-lg font-black text-slate-900 truncate leading-tight">{selectedUser?.fullName}</h2>
+                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest block">{selectedUser?.id}</span>
+             </div>
+          </div>
+          
+          {/* Info Grid - 2 Columns */}
+          <div className="grid grid-cols-2 gap-2">
+             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 block">Department</span>
+                <p className="text-[10px] font-bold text-slate-800 truncate">{selectedUser?.department}</p>
+             </div>
+             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 block">Year</span>
+                <p className="text-[10px] font-bold text-slate-800">{selectedUser?.year}</p>
+             </div>
+             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 block">DOB</span>
+                <p className="text-[10px] font-bold text-slate-800">{selectedUser?.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
+             </div>
+             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 block">Phone</span>
+                <p className="text-[10px] font-bold text-slate-800">{selectedUser?.phoneNumber || 'N/A'}</p>
+             </div>
+             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 col-span-2">
+                <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 block">Email Address</span>
+                <p className="text-[10px] font-bold text-slate-800 truncate">{selectedUser?.email}</p>
+             </div>
+             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 col-span-2">
+                <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 block">Delivery Address</span>
+                <p className="text-[10px] font-bold text-slate-800 truncate">{selectedUser?.address || 'N/A'}</p>
              </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Department</span>
-                <p className="text-sm font-bold text-slate-900 leading-tight">{selectedUser?.department}</p>
-             </div>
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Academic Year</span>
-                <p className="text-sm font-bold text-slate-900">{selectedUser?.year}</p>
-             </div>
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date of Birth</span>
-                <p className="text-sm font-bold text-slate-900">{selectedUser?.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not provided'}</p>
-             </div>
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</span>
-                <p className="text-sm font-bold text-slate-900">{selectedUser?.email}</p>
-             </div>
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Number</span>
-                <p className="text-sm font-bold text-slate-900">{selectedUser?.phoneNumber || 'Not provided'}</p>
-             </div>
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Delivery Address</span>
-                <p className="text-sm font-bold text-slate-900">{selectedUser?.address || 'Not provided'}</p>
-             </div>
-             <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-1 col-span-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Joined Date</span>
-                <p className="text-sm font-bold text-slate-900">{selectedUser?.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}</p>
-             </div>
-          </div>
-
-          <div className="pt-2">
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Joined: {selectedUser?.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'N/A'}</span>
             <Button 
               onClick={() => setSelectedUser(null)}
-              className="w-full h-14 bg-slate-900 text-white font-black text-sm uppercase tracking-widest rounded-[20px] shadow-xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="h-9 px-6 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg"
             >
-              Close Profile
+              Close
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Create Student Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Add New Student"
+      >
+        <form onSubmit={handleCreateStudent} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">First Name</label>
+              <input 
+                required
+                className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
+                value={newStudentData.firstName}
+                onChange={e => setNewStudentData({...newStudentData, firstName: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Last Name</label>
+              <input 
+                required
+                className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
+                value={newStudentData.lastName}
+                onChange={e => setNewStudentData({...newStudentData, lastName: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address (Gmail)</label>
+            <input 
+              required
+              type="email"
+              className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
+              value={newStudentData.email}
+              onChange={e => setNewStudentData({...newStudentData, email: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Department</label>
+              <Select 
+                options={DEPT_OPTIONS.filter(o => o.value !== 'All Departments')}
+                value={newStudentData.department}
+                onChange={val => setNewStudentData({...newStudentData, department: val})}
+                className="h-12 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Year</label>
+              <Select 
+                options={['1st Year', '2nd Year', '3rd Year', '4th Year'].map(y => ({label: y, value: y}))}
+                value={newStudentData.year}
+                onChange={val => setNewStudentData({...newStudentData, year: val})}
+                className="h-12 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date of Birth</label>
+            <input 
+              type="date"
+              required
+              className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
+              value={newStudentData.dateOfBirth}
+              onChange={e => setNewStudentData({...newStudentData, dateOfBirth: e.target.value})}
+            />
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => setIsCreateModalOpen(false)}
+              className="flex-1 h-12 rounded-xl font-bold"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isCreating}
+              className="flex-1 h-12 rounded-xl bg-indigo-600 text-white font-bold shadow-lg"
+            >
+              {isCreating ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Create Student'}
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

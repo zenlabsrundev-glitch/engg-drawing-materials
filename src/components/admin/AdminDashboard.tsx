@@ -143,19 +143,16 @@ export const AdminDashboard: React.FC = () => {
             {orders.slice(0, 5).map((order) => {
               const isPending = order.status === 'Pending';
               const isPacked = order.status === 'Packed';
-              const isOutForDelivery = order.status === 'Out for Delivery';
               
               const statusGradient = isPending 
                 ? 'from-amber-400 to-orange-500' 
                 : isPacked 
                   ? 'from-indigo-500 to-blue-600'
-                  : isOutForDelivery
-                    ? 'from-orange-400 to-amber-500'
-                    : 'from-emerald-500 to-teal-600';
+                  : 'from-emerald-500 to-teal-600';
 
-              const iconBg = isPending ? 'bg-amber-50' : isPacked ? 'bg-indigo-50' : isOutForDelivery ? 'bg-orange-50' : 'bg-emerald-50';
-              const iconColor = isPending ? 'text-amber-500' : isPacked ? 'text-indigo-500' : isOutForDelivery ? 'text-orange-500' : 'text-emerald-500';
-              const badgeClasses = isPending ? 'bg-amber-100 text-amber-700' : isPacked ? 'bg-indigo-100 text-indigo-700' : isOutForDelivery ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700';
+              const iconBg = isPending ? 'bg-amber-50' : isPacked ? 'bg-indigo-50' : 'bg-emerald-50';
+              const iconColor = isPending ? 'text-amber-500' : isPacked ? 'text-indigo-500' : 'text-emerald-500';
+              const badgeClasses = isPending ? 'bg-amber-100 text-amber-700' : isPacked ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700';
 
               return (
                 <div key={order.id} className="group relative flex items-center justify-between rounded-2xl border border-slate-200/60 bg-white/50 p-3 md:p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10">
@@ -165,8 +162,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className={`relative flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl ${iconBg} transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110`}>
                       {isPending && <Clock className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
                       {isPacked && <Package className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
-                      {isOutForDelivery && <Truck className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
-                      {!isPending && !isPacked && !isOutForDelivery && <CheckCircle2 className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
+                      {!isPending && !isPacked && <CheckCircle2 className={`h-4 w-4 md:h-5 md:w-5 ${iconColor}`} />}
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="truncate text-sm font-extrabold text-slate-900 transition-colors group-hover:text-indigo-600">{order.userName}</span>

@@ -31,7 +31,7 @@ export interface Kit {
   category: string;
 }
 
-export type OrderStatus = 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered';
+export type OrderStatus = 'Pending' | 'Packed' | 'Delivered';
 
 export interface OrderItem {
   id: string;

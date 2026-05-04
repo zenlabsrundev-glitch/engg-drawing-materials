@@ -192,10 +192,9 @@ export const StudentOrdersPage: React.FC = () => {
                   const steps = [
                     { key: 'Pending',          label: 'Order Confirmed',     sub: 'Your order has been received & confirmed',   Icon: CheckCircle2 },
                     { key: 'Packed',           label: 'Packed & Dispatched', sub: 'Your kit is packed and ready for delivery',  Icon: Package },
-                    { key: 'Out for Delivery', label: 'Out for Delivery',    sub: 'Your kit is on its way to you',              Icon: Truck },
                     { key: 'Delivered',        label: 'Delivered',           sub: 'Your kit has been delivered successfully!',  Icon: Navigation },
                   ];
-                  const statusOrder = ['Pending', 'Packed', 'Out for Delivery', 'Delivered'];
+                  const statusOrder = ['Pending', 'Packed', 'Delivered'];
                   const currentIdx = statusOrder.indexOf(selectedOrder.status);
                   return steps.map((step, idx) => {
                     const isCompleted = idx < currentIdx;

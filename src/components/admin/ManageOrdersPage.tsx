@@ -10,7 +10,7 @@ import { Order } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrackOrderModal } from '../shared/TrackOrderModal';
 
-export const ManageOrdersView: React.FC = () => {
+export const ManageOrdersPage: React.FC = () => {
   const { orders, updateOrderStatus, archiveOrder } = useDataStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -189,17 +189,6 @@ export const ManageOrdersView: React.FC = () => {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => handleUpdateClick(order, 'Out for Delivery')}
-              className="h-9 w-9 p-0 text-amber-600 hover:bg-amber-50 rounded-xl transition-all active:scale-90"
-              title="Mark Out for Delivery"
-            >
-              <Truck className="h-5 w-5" strokeWidth={2.5} />
-            </Button>
-          )}
-          {order.status === 'Out for Delivery' && (
-            <Button
-              size="sm"
-              variant="ghost"
               onClick={() => handleUpdateClick(order, 'Delivered')}
               className="h-9 w-9 p-0 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-90"
               title="Mark as Delivered"
@@ -253,7 +242,6 @@ export const ManageOrdersView: React.FC = () => {
                 { label: 'All Status', value: 'All' },
                 { label: 'Pending', value: 'Pending' },
                 { label: 'Packed', value: 'Packed' },
-                { label: 'Out for Delivery', value: 'Out for Delivery' },
                 { label: 'Delivered', value: 'Delivered' }
               ]}
             />
@@ -343,16 +331,6 @@ export const ManageOrdersView: React.FC = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleUpdateClick(order, 'Out for Delivery')}
-                      className="h-10 w-10 p-0 text-amber-600 bg-amber-50 rounded-xl"
-                    >
-                      <Truck className="h-5 w-5" />
-                    </Button>
-                  )}
-                  {order.status === 'Out for Delivery' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
                       onClick={() => handleUpdateClick(order, 'Delivered')}
                       className="h-10 w-10 p-0 text-emerald-600 bg-emerald-50 rounded-xl"
                     >
@@ -438,13 +416,11 @@ export const ManageOrdersView: React.FC = () => {
         <div className="relative overflow-hidden p-3 bg-slate-50/50">
           {/* Background Grid & Glow Effect */}
           <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
-          <div className={`absolute -top-32 -left-32 h-64 w-64 rounded-full blur-[100px] opacity-40 ${confirmModal.nextStatus === 'Packed' ? 'bg-indigo-500' : confirmModal.nextStatus === 'Out for Delivery' ? 'bg-amber-500' : 'bg-emerald-500'
-            }`} />
-          <div className={`absolute -bottom-32 -right-32 h-64 w-64 rounded-full blur-[100px] opacity-40 ${confirmModal.nextStatus === 'Packed' ? 'bg-indigo-500' : confirmModal.nextStatus === 'Out for Delivery' ? 'bg-amber-500' : 'bg-emerald-500'
-            }`} />
+          <div className={`absolute -top-32 -left-32 h-64 w-64 rounded-full blur-[100px] opacity-40 ${confirmModal.nextStatus === 'Packed' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+          <div className={`absolute -bottom-32 -right-32 h-64 w-64 rounded-full blur-[100px] opacity-40 ${confirmModal.nextStatus === 'Packed' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
 
-          <div className="relative z-10 flex flex-col gap-5">
-            <div className="flex flex-col items-center text-center gap-4 mt-2">
+          <div className="relative z-10 flex flex-col gap-3 sm:gap-5">
+            <div className="flex flex-col items-center text-center gap-2 sm:gap-4 mt-1 sm:mt-2">
               <motion.div
                 initial={{ scale: 0.5, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -455,21 +431,16 @@ export const ManageOrdersView: React.FC = () => {
                 <motion.div
                   animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0, 0.3] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                  className={`absolute -inset-4 rounded-full border-[3px] ${confirmModal.nextStatus === 'Packed' ? 'border-indigo-400' : confirmModal.nextStatus === 'Out for Delivery' ? 'border-amber-400' : 'border-emerald-400'
-                    } opacity-30`}
+                  className={`absolute -inset-4 rounded-full border-[3px] ${confirmModal.nextStatus === 'Packed' ? 'border-indigo-400' : 'border-emerald-400'} opacity-30`}
                 />
 
-                <div className={`relative flex h-20 w-20 items-center justify-center rounded-[24px] shadow-2xl ${confirmModal.nextStatus === 'Packed'
+                <div className={`relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-[20px] sm:rounded-[24px] shadow-2xl ${confirmModal.nextStatus === 'Packed'
                     ? 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 shadow-indigo-500/40'
-                    : confirmModal.nextStatus === 'Out for Delivery'
-                    ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-600 shadow-amber-500/40'
                     : 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 shadow-emerald-500/40'
                   }`}>
-                  <div className="absolute inset-0 rounded-[24px] bg-white/20 blur-sm mix-blend-overlay" />
+                  <div className="absolute inset-0 rounded-[20px] sm:rounded-[24px] bg-white/20 blur-sm mix-blend-overlay" />
                   {confirmModal.nextStatus === 'Packed' ? (
                     <PackageCheck className="relative z-10 h-10 w-10 text-white drop-shadow-md" strokeWidth={2.5} />
-                  ) : confirmModal.nextStatus === 'Out for Delivery' ? (
-                    <Truck className="relative z-10 h-10 w-10 text-white drop-shadow-md" strokeWidth={2.5} />
                   ) : (
                     <Send className="relative z-10 h-10 w-10 text-white drop-shadow-md ml-1" strokeWidth={2.5} />
                   )}
@@ -477,14 +448,12 @@ export const ManageOrdersView: React.FC = () => {
               </motion.div>
 
               <div className="space-y-1 px-2">
-                <h4 className={`text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br ${confirmModal.nextStatus === 'Packed' ? 'from-indigo-700 to-blue-500' : confirmModal.nextStatus === 'Out for Delivery' ? 'from-amber-700 to-orange-500' : 'from-emerald-700 to-teal-500'
-                  }`}>
-                  {confirmModal.nextStatus === 'Packed' ? 'Pack this Order?' : confirmModal.nextStatus === 'Out for Delivery' ? 'Send Out for Delivery?' : 'Mark as Delivered?'}
+                <h4 className={`text-xl sm:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br ${confirmModal.nextStatus === 'Packed' ? 'from-indigo-700 to-blue-500' : 'from-emerald-700 to-teal-500'}`}>
+                  {confirmModal.nextStatus === 'Packed' ? 'Pack this Order?' : 'Mark as Delivered?'}
                 </h4>
-                <p className="text-xs font-semibold text-slate-500 px-4">
+                <p className="text-[10px] sm:text-xs font-semibold text-slate-500 px-2 sm:px-4 leading-tight">
                   Confirming will update order <span className="text-slate-900 font-black">#{confirmModal.order?.id}</span> to
-                  <span className={`ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border ${confirmModal.nextStatus === 'Packed' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : confirmModal.nextStatus === 'Out for Delivery' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    }`}>{confirmModal.nextStatus}</span>
+                  <span className={`ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border ${confirmModal.nextStatus === 'Packed' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>{confirmModal.nextStatus}</span>
                 </p>
               </div>
             </div>
@@ -493,8 +462,7 @@ export const ManageOrdersView: React.FC = () => {
               <div className="absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/80 to-white/20 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
               <div className="relative flex flex-col gap-2 bg-white/80 rounded-[16px] p-3 border border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-br ${confirmModal.nextStatus === 'Packed' ? 'from-indigo-100 to-blue-50 text-indigo-600' : confirmModal.nextStatus === 'Out for Delivery' ? 'from-amber-100 to-orange-50 text-amber-600' : 'from-emerald-100 to-teal-50 text-emerald-600'
-                    } font-black text-lg shadow-inner border border-white/50`}>
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-br ${confirmModal.nextStatus === 'Packed' ? 'from-indigo-100 to-blue-50 text-indigo-600' : 'from-emerald-100 to-teal-50 text-emerald-600'} font-black text-lg shadow-inner border border-white/50`}>
                     {confirmModal.order?.userName.charAt(0)}
                   </div>
                   <div className="flex flex-col flex-1 text-left">
@@ -522,16 +490,16 @@ export const ManageOrdersView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-1 pb-1">
               <Button
                 variant="ghost"
-                className="flex-1 h-11 font-black text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 rounded-xl transition-all"
+                className="flex-1 h-10 sm:h-11 font-black text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 rounded-xl transition-all text-xs sm:text-sm"
                 onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
               >
                 Cancel
               </Button>
               <Button
-                className={`relative overflow-hidden flex-[2] h-11 font-black text-sm shadow-xl transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 rounded-xl ${confirmModal.nextStatus === 'Packed'
+                className={`relative overflow-hidden flex-[2] h-10 sm:h-11 font-black text-xs sm:text-sm shadow-xl transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-95 rounded-xl ${confirmModal.nextStatus === 'Packed'
                     ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/30 text-white'
                     : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/30 text-white'
                   }`}

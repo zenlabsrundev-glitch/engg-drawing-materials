@@ -59,13 +59,13 @@ export function Select({ label, value, onChange, options, placeholder = 'Select 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1 text-slate-950 shadow-lg outline-none"
+            className="absolute z-[100] mt-1 max-h-48 w-full overflow-auto rounded-xl border border-slate-200 bg-white/95 backdrop-blur-xl p-1 text-slate-950 shadow-2xl outline-none"
           >
             {options.map((option) => (
               <div
                 key={option.value}
                 className={cn(
-                  "relative flex w-full cursor-pointer select-none items-center rounded-lg py-2.5 pl-9 pr-3 text-sm font-medium outline-none transition-colors hover:bg-slate-100 focus:bg-slate-100",
+                  "relative flex w-full cursor-pointer select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-[10px] font-bold outline-none transition-colors hover:bg-slate-100 focus:bg-slate-100",
                   value === option.value ? "bg-indigo-50 text-indigo-700" : "text-slate-700"
                 )}
                 onClick={() => {

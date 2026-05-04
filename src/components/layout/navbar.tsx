@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { ShoppingCart, Layout, LogOut, User as UserIcon, Bell, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { ShoppingCart, Layout, LogOut, User as UserIcon, Bell, PanelLeftOpen, PanelLeftClose, Menu } from 'lucide-react';
 import { Button } from '../ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '../../store/cartStore';
@@ -62,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
 
       <div className="relative mx-auto flex h-14 md:h-20 max-w-full items-center justify-between px-2 md:px-6">
         <div className="flex-1 flex items-center">
+
           <div className="flex items-center group cursor-default scale-[0.6] md:scale-90 origin-left">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 z-10"
@@ -152,6 +153,31 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
             </Button>
           )}
 
+
+          {/* Cart button */}
+          {role === 'student' && (
+            <button
+              onClick={() => navigate('/student/cart')}
+              className="relative flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            >
+              <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 text-white/70" strokeWidth={2.5} />
+              {cartCount > 0 && (
+                <span
+                  className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white ring-2 ring-[#0f0c29]"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}
+                >
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Sidebar Toggle - Right Side */}
           {onToggleSidebar && (
             <motion.button
@@ -185,28 +211,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, onToggleSidebar }) 
               )}
             </motion.button>
           )}
-
-          {/* Cart button */}
-          <button
-            onClick={() => navigate('/student/cart')}
-            className="relative flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl transition-all duration-300 hover:scale-105"
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.2)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-          >
-            <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 text-white/70" strokeWidth={2.5} />
-            {cartCount > 0 && (
-              <span
-                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white ring-2 ring-[#0f0c29]"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </button>
 
           {/* Bell notification */}
           <div className="relative">

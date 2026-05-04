@@ -12,7 +12,8 @@ import {
   Settings,
   Sparkles,
   LogOut,
-  UserCircle
+  UserCircle,
+  X
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useDataStore } from '../../store/dataStore';
@@ -58,7 +59,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose?: () => void }> = ({ i
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: '-100%', opacity: 0 }}
           transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-          className="fixed left-0 top-0 lg:top-20 z-30 h-screen lg:h-[calc(100vh-80px)] w-72 lg:w-64 flex flex-col overflow-hidden"
+          className="fixed left-0 top-0 lg:top-20 z-50 h-screen lg:h-[calc(100vh-80px)] w-72 lg:w-64 flex flex-col overflow-hidden"
           style={{
             background: 'linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
             boxShadow: '4px 0 30px rgba(0,0,0,0.3)',
@@ -74,18 +75,18 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose?: () => void }> = ({ i
       />
 
       {/* Mobile Header in Sidebar */}
-      <div className="flex lg:hidden items-center justify-between px-6 py-8">
+      <div className="flex lg:hidden items-center justify-between px-6 py-6 border-b border-white/5 mb-2">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
             <Sparkles className="h-5 w-5 text-indigo-400" />
           </div>
-          <span className="text-xl font-black text-white tracking-tight">Menu</span>
+          <span className="text-xl font-black text-white tracking-tight">Navigation</span>
         </div>
         <button 
           onClick={onClose}
-          className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white"
+          className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
         >
-          <LogOut className="h-5 w-5 rotate-180" />
+          <X className="h-6 w-6" />
         </button>
       </div>
 

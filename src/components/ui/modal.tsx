@@ -57,11 +57,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`relative w-full ${sizes[size]} overflow-hidden rounded-2xl bg-white/95 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20`}
+            className={`relative w-full ${sizes[size]} max-h-[90vh] flex flex-col overflow-hidden rounded-2xl bg-white/95 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20`}
           >
             {/* Header with subtle border */}
             {!hideHeader && (
-              <div className="flex items-center justify-between border-b border-slate-100 bg-white/50 px-6 py-4 backdrop-blur-sm">
+              <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-100 bg-white/50 px-6 py-4 backdrop-blur-sm">
                 <h3 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h3>
                 <Button 
                   variant="ghost" 
@@ -75,7 +75,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             )}
 
             {/* Content Area */}
-            <div className={noPadding ? "" : "px-6 py-8 overflow-y-auto max-h-[75vh]"}>
+            <div className={`flex-1 overflow-y-auto ${noPadding ? "" : "px-6 py-8"}`}>
               {children}
             </div>
 

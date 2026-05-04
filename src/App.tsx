@@ -13,10 +13,10 @@ import { StudentCartPage } from './components/student/StudentCartPage';
 import { StudentOrdersPage } from './components/student/StudentOrdersPage';
 import { StudentProfilePage } from './components/student/StudentProfilePage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { ManageOrdersView as ManageOrdersPage } from './components/admin/ManageOrdersView';
-import { ManageUsersView as ManageUsersPage } from './components/admin/ManageUsersView';
+import { ManageOrdersPage } from './components/admin/ManageOrdersPage';
+import { ManageUsersPage } from './components/admin/ManageUsersPage';
 import { ManageKitsPage } from './components/admin/ManageKitsPage';
-import { ReportsView as AdminReportsPage } from './components/admin/ReportsView';
+import { ReportsPage as AdminReportsPage } from './components/admin/ReportsPage';
 import { AdminSettingsPage } from './components/admin/AdminSettingsPage';
 import { StudentKitsPage } from './components/student/StudentKitsPage';
 

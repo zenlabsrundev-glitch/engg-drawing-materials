@@ -185,9 +185,12 @@ export const ManageKitsPage: React.FC = () => {
         type="danger"
         confirmText="Delete"
       />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-slate-900">Manage Kits</h1>
-        <Button onClick={() => handleOpenModal()} className="rounded-xl shadow-lg shadow-indigo-200">
+        <Button 
+          onClick={() => handleOpenModal()} 
+          className="rounded-xl shadow-lg shadow-indigo-200 whitespace-nowrap w-full sm:w-auto"
+        >
           <Plus className="mr-2 h-4 w-4" strokeWidth={3} />
           Create New Kit
         </Button>
@@ -215,7 +218,7 @@ export const ManageKitsPage: React.FC = () => {
             {/* Image Container (Large Square) */}
             <div className="relative aspect-square w-full rounded-[24px] overflow-hidden bg-slate-100 mb-6">
               <img 
-                src={kit.image || 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&q=80&w=400'} 
+                src={(kit.image?.replace(/\.jpg\.jpg$/, '.jpg')) || 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&q=80&w=400'} 
                 alt={kit.name}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -289,42 +292,41 @@ export const ManageKitsPage: React.FC = () => {
         title=""
         size="lg"
       >
-        <div className="p-2 space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">{viewingKit?.name}</h2>
-            <p className="text-sm font-bold text-slate-500 max-w-md mx-auto">{viewingKit?.description}</p>
+        <div className="p-0 sm:p-2 space-y-4 sm:space-y-6">
+          <div className="text-center">
+            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">{viewingKit?.name}</h2>
           </div>
 
           {viewingKit?.image && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="aspect-video w-full rounded-[32px] overflow-hidden bg-slate-50 border border-slate-100 shadow-xl"
+              className="relative w-full h-32 sm:h-48 rounded-2xl sm:rounded-[32px] overflow-hidden bg-slate-50 border border-slate-100 shadow-lg flex items-center justify-center"
             >
-              <img src={viewingKit.image} alt={viewingKit.name} className="h-full w-full object-cover" />
+              <img src={viewingKit.image?.replace(/\.jpg\.jpg$/, '.jpg')} alt={viewingKit.name} className="h-full w-full object-contain p-2" />
             </motion.div>
           )}
 
-          <div className="bg-slate-50 rounded-[32px] p-8 border border-slate-100 space-y-4">
-             <div className="flex items-center gap-3">
-               <div className="h-2 w-2 rounded-full bg-indigo-500" />
-               <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Kit Specifications</span>
+          <div className="bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-100 space-y-2 sm:space-y-4">
+             <div className="flex items-center gap-2">
+               <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Kit Specifications</span>
              </div>
-             <p className="text-slate-600 font-medium leading-relaxed">
-               {viewingKit?.description || 'This premium stationery kit includes all essential tools required for your engineering drawing and academic success. Professionally curated and packed for students.'}
+             <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+               {viewingKit?.description || 'This premium stationery kit includes all essential tools required for your academic success. Professionally curated and packed.'}
              </p>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Kit Price</span>
-              <span className="text-2xl font-black text-indigo-600 tracking-tighter">₹{viewingKit?.price}</span>
+          <div className="pt-3 pb-2 border-t border-slate-100 flex flex-row justify-between items-center gap-2">
+            <div className="flex flex-col items-start w-auto">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">Total Price</span>
+              <span className="text-xl sm:text-2xl font-black text-indigo-600 tracking-tighter">₹{viewingKit?.price}</span>
             </div>
             <Button 
               onClick={() => setViewingKit(null)}
-              className="h-12 px-10 rounded-2xl bg-slate-900 text-white font-black text-sm transition-all hover:scale-105 active:scale-95"
+              className="w-auto h-10 px-6 sm:px-10 rounded-xl bg-slate-900 text-white font-black text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 shadow-md"
             >
-              Close Details
+              Close
             </Button>
           </div>
         </div>

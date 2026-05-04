@@ -7,13 +7,32 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Modal } from '../../ui/modal';
 import { 
-  ShieldCheck, GraduationCap, ArrowRight, User, Lock, Mail, 
+  ShieldCheck, GraduationCap, ArrowRight, User, Lock as LockIcon, Mail, 
   Calendar, BookOpen, KeyRound, CheckCircle2, Wrench, Settings, 
-  Ruler, Pencil, Compass, Cpu, Layers, MapPin, Phone 
+  Ruler, Pencil, Compass, Cpu, Layers, MapPin, Phone, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertModal } from '../../ui/alert-modal';
+import { Select } from '../../ui/select';
 import api from '../../../services/api';
+
+const DEPARTMENTS = [
+  'Computer Science',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Electrical Engineering',
+  'Electronics & Communication'
+];
+
+const ACADEMIC_YEARS = [
+  '1st Year',
+  '2nd Year',
+  '3rd Year',
+  '4th Year'
+];
+
+const DEPT_OPTIONS = DEPARTMENTS.map(dept => ({ label: dept, value: dept }));
+const YEAR_OPTIONS = ACADEMIC_YEARS.map(year => ({ label: year, value: year }));
 
 export const Login: React.FC = () => {
   const [view, setView] = useState<'login' | 'signup'>('login');
@@ -33,6 +52,7 @@ export const Login: React.FC = () => {
     email: '',
     dateOfBirth: '',
     department: '',
+    year: '',
     address: '',
     phoneNumber: ''
   });
@@ -73,6 +93,7 @@ export const Login: React.FC = () => {
         email: formData.email,
         role: 'student',
         department: formData.department,
+        year: formData.year,
         dateOfBirth: formData.dateOfBirth,
         address: formData.address,
         phoneNumber: formData.phoneNumber
@@ -110,7 +131,7 @@ export const Login: React.FC = () => {
       
       setTimeout(() => {
         login(user, token);
-        navigate(user.role === 'admin' ? '/admin' : '/student/kits');
+        navigate(user.role === 'admin' ? '/admin' : '/student/kits', { replace: true });
       }, 3000);
 
     } catch (err: any) {
@@ -294,7 +315,7 @@ export const Login: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="rounded-xl"
-                icon={<Lock className="h-4 w-4 text-pink-500" />}
+                icon={<LockIcon className="h-4 w-4 text-pink-500" />}
               />
 
               {error && <p className="text-[9px] font-black text-red-500 bg-red-50 p-2 rounded-lg text-center uppercase">{error}</p>}
@@ -323,13 +344,14 @@ export const Login: React.FC = () => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-4"
           >
-            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 -mx-6 -mt-4 p-4 text-white text-center mb-2">
-              <GraduationCap className="h-8 w-8 mx-auto mb-1 opacity-90" />
-              <h3 className="text-sm font-black uppercase tracking-tight">Student Registration</h3>
-              <p className="text-[8px] font-bold opacity-80 uppercase tracking-widest">Join the campus hub</p>
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 -mx-6 -mt-4 p-3 text-white text-center mb-2">
+              <div className="flex items-center justify-center gap-2">
+                <GraduationCap className="h-5 w-5 opacity-90" />
+                <h3 className="text-xs font-black uppercase tracking-tight">Student Registration</h3>
+              </div>
             </div>
 
-            <form onSubmit={handleRegister} className="space-y-3">
+            <form onSubmit={handleRegister} className="space-y-2.5 pb-2">
               <div className="grid grid-cols-2 gap-3">
                 <Input label="First Name" placeholder="John" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} required className="rounded-xl h-9 text-[11px]" />
                 <Input label="Last Name" placeholder="Doe" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} required className="rounded-xl h-9 text-[11px]" />
@@ -341,17 +363,36 @@ export const Login: React.FC = () => {
                 <Input label="Phone" placeholder="+91..." value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} required className="rounded-xl h-9 text-[11px]" />
               </div>
               
-              <Input label="Department" placeholder="Computer Science" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} required className="rounded-xl h-9 text-[11px]" icon={<BookOpen className="h-3.5 w-3.5 text-indigo-500" />} />
-              <Input label="Address" placeholder="A-Block, Room 101" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required className="rounded-xl h-9 text-[11px]" icon={<MapPin className="h-3.5 w-3.5 text-pink-500" />} />
-
-              <div className="pt-2 flex flex-col gap-2">
-                <Button type="submit" disabled={isRegistering} className="w-full h-11 bg-indigo-600 rounded-xl font-black uppercase text-[10px]">
-                  {isRegistering ? 'Processing...' : 'Complete Registration'}
-                </Button>
-                <button type="button" className="text-[9px] font-black text-slate-400 hover:text-indigo-600 uppercase text-center py-1" onClick={() => setView('login')}>
-                  ← Back to Login
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                <Select 
+                  label="Department" 
+                  value={formData.department} 
+                  onChange={val => setFormData({...formData, department: val})} 
+                  options={DEPT_OPTIONS}
+                  placeholder="Select Dept"
+                  className="rounded-xl h-9 text-[10px]"
+                />
+                <Select 
+                  label="Academic Year" 
+                  value={formData.year || ''} 
+                  onChange={val => setFormData({...formData, year: val})} 
+                  options={YEAR_OPTIONS}
+                  placeholder="Select Year"
+                  className="rounded-xl h-9 text-[10px]"
+                />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Address" placeholder="Room/Hostel" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required className="rounded-xl h-9 text-[11px]" icon={<MapPin className="h-3.5 w-3.5 text-pink-500" />} />
+                <div className="flex flex-col justify-end">
+                  <Button type="submit" disabled={isRegistering} className="w-full h-9 bg-indigo-600 rounded-xl font-black uppercase text-[9px] shadow-lg">
+                    {isRegistering ? '...' : 'Register'}
+                  </Button>
+                </div>
+              </div>
+
+              <button type="button" className="w-full text-[9px] font-black text-slate-400 hover:text-indigo-600 uppercase text-center py-1 mt-1" onClick={() => setView('login')}>
+                ← Back to Login
+              </button>
             </form>
           </motion.div>
         )}
@@ -490,7 +531,7 @@ export const ForgotPasswordModal: React.FC<{ isOpen: boolean; onClose: () => voi
         {step === 'reset' && (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Set new secure password</p>
-            <Input label="New Password" type="password" placeholder="********" value={newPassword} onChange={e => setNewPassword(e.target.value)} required icon={<Lock className="h-4 w-4" />} />
+            <Input label="New Password" type="password" placeholder="********" value={newPassword} onChange={e => setNewPassword(e.target.value)} required icon={<LockIcon className="h-4 w-4" />} />
             <Input label="Confirm Password" type="password" placeholder="********" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
             {error && <p className="text-[9px] font-black text-red-500 bg-red-50 p-2 rounded-lg text-center">{error}</p>}
             <Button className="w-full h-11" disabled={isProcessing}>{isProcessing ? 'Updating...' : 'Reset Password'}</Button>

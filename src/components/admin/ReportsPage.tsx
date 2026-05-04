@@ -57,7 +57,7 @@ const ReportExportMenu: React.FC<{
 };
 
 
-export const ReportsView: React.FC = () => {
+export const ReportsPage: React.FC = () => {
   const { orders, users, archivedOrders, kits } = useDataStore();
 
   const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
@@ -109,10 +109,16 @@ export const ReportsView: React.FC = () => {
     doc.setFontSize(8);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 36);
 
+    // Sanitize headers and rows to replace symbols that jsPDF default fonts don't support
+    const sanitizedHeaders = headers.map(h => typeof h === 'string' ? h.replace(/₹/g, 'Rs. ') : h);
+    const sanitizedRows = rows.map(row => 
+      row.map(cell => typeof cell === 'string' ? cell.replace(/₹/g, 'Rs. ') : cell)
+    );
+
     autoTable(doc, {
       startY: 45,
-      head: [headers],
-      body: rows,
+      head: [sanitizedHeaders],
+      body: sanitizedRows,
       theme: 'grid',
       headStyles: { fillColor: [79, 70, 229] },
     });
@@ -120,7 +126,17 @@ export const ReportsView: React.FC = () => {
   };
 
   const exportExcel = (title: string, headers: string[], rows: any[][], filename: string) => {
-    const ws = XLSX.utils.aoa_to_sheet([[title], [], headers, ...rows]);
+    // Sanitize headers and rows for Excel
+    const sanitizedHeaders = headers.map(h => typeof h === 'string' ? h.replace(/₹/g, 'Rs. ') : h);
+    const sanitizedRows = rows.map(row => 
+      row.map(cell => typeof cell === 'string' ? cell.replace(/₹/g, 'Rs. ') : cell)
+    );
+    const ws = XLSX.utils.aoa_to_sheet([[title], [], sanitizedHeaders, ...sanitizedRows]);
+
+    // Set column widths to make it look professional
+    const colWidths = sanitizedHeaders.map(() => ({ wch: 25 }));
+    ws['!cols'] = colWidths;
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     XLSX.writeFile(wb, `${filename}.xlsx`);
