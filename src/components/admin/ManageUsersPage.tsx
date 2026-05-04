@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useDataStore } from '../../store/dataStore';
 import { Table } from '../ui/table';
-import { Search, Trash2, UserPlus, Users, GraduationCap, Building2, Eye, Filter, Send, RefreshCw } from 'lucide-react';
+import { Search, Trash2, Users, GraduationCap, Building2, Eye, Filter, Send, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Modal } from '../ui/modal';
 import { Select } from '../ui/select';
@@ -25,22 +25,10 @@ export const ManageUsersPage: React.FC = () => {
   const { users, deleteUser } = useDataStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('All Departments');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newStudentData, setNewStudentData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    department: 'Computer Science',
-    year: '1st Year',
-    dateOfBirth: '',
-    phoneNumber: '',
-    address: ''
-  });
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSending, setIsSending] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isSending, setIsSending] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; type: 'error' | 'success' }>({
     isOpen: false,
     title: '',
@@ -71,52 +59,6 @@ export const ManageUsersPage: React.FC = () => {
       });
     } finally {
       setIsSending(null);
-    }
-  };
-
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStudentData.email.endsWith('@gmail.com')) {
-      setAlert({
-        isOpen: true,
-        title: 'Invalid Email',
-        message: 'Only @gmail.com addresses are accepted.',
-        type: 'error'
-      });
-      return;
-    }
-
-    setIsCreating(true);
-    try {
-      await api.post('/auth/register', {
-        fullName: `${newStudentData.firstName} ${newStudentData.lastName}`,
-        email: newStudentData.email,
-        role: 'student',
-        department: newStudentData.department,
-        year: newStudentData.year,
-        dateOfBirth: newStudentData.dateOfBirth,
-        phoneNumber: newStudentData.phoneNumber,
-        address: newStudentData.address
-      });
-      
-      setAlert({
-        isOpen: true,
-        title: 'Success!',
-        message: 'Student created and credentials sent to Gmail.',
-        type: 'success'
-      });
-      setIsCreateModalOpen(false);
-      // Refresh the user list
-      useDataStore.getState().fetchUsers();
-    } catch (err: any) {
-      setAlert({
-        isOpen: true,
-        title: 'Creation Failed',
-        message: err.response?.data?.message || 'Failed to create student.',
-        type: 'error'
-      });
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -250,15 +192,7 @@ export const ManageUsersPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-          <Button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-full sm:w-auto h-14 px-8 rounded-[28px] bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
-          >
-            <UserPlus className="h-5 w-5" strokeWidth={3} />
-            <span>Create Student</span>
-          </Button>
-
-          <div className="relative group w-full sm:min-w-[200px] lg:min-w-[240px]">
+          <div className="relative group w-full sm:min-w-[240px] lg:min-w-[280px]">
              <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
                 <Filter className="h-5 w-5 text-slate-400" strokeWidth={3} />
              </div>
@@ -529,96 +463,6 @@ export const ManageUsersPage: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Create Student Modal */}
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Add New Student"
-      >
-        <form onSubmit={handleCreateStudent} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">First Name</label>
-              <input 
-                required
-                className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
-                value={newStudentData.firstName}
-                onChange={e => setNewStudentData({...newStudentData, firstName: e.target.value})}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Last Name</label>
-              <input 
-                required
-                className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
-                value={newStudentData.lastName}
-                onChange={e => setNewStudentData({...newStudentData, lastName: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address (Gmail)</label>
-            <input 
-              required
-              type="email"
-              className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
-              value={newStudentData.email}
-              onChange={e => setNewStudentData({...newStudentData, email: e.target.value})}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Department</label>
-              <Select 
-                options={DEPT_OPTIONS.filter(o => o.value !== 'All Departments')}
-                value={newStudentData.department}
-                onChange={val => setNewStudentData({...newStudentData, department: val})}
-                className="h-12 rounded-xl"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Year</label>
-              <Select 
-                options={['1st Year', '2nd Year', '3rd Year', '4th Year'].map(y => ({label: y, value: y}))}
-                value={newStudentData.year}
-                onChange={val => setNewStudentData({...newStudentData, year: val})}
-                className="h-12 rounded-xl"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date of Birth</label>
-            <input 
-              type="date"
-              required
-              className="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm font-bold focus:border-indigo-500 outline-none"
-              value={newStudentData.dateOfBirth}
-              onChange={e => setNewStudentData({...newStudentData, dateOfBirth: e.target.value})}
-            />
-          </div>
-
-          <div className="pt-4 flex gap-3">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => setIsCreateModalOpen(false)}
-              className="flex-1 h-12 rounded-xl font-bold"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isCreating}
-              className="flex-1 h-12 rounded-xl bg-indigo-600 text-white font-bold shadow-lg"
-            >
-              {isCreating ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Create Student'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };
